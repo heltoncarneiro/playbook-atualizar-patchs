@@ -1,0 +1,38 @@
+---
+- hosts: all
+  become: yes
+
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Upgrade installed packages (apt upgrade)
+      apt:
+        upgrade: yes
+
+    - name: Reboot server
+      reboot:
+        msg: "Reboot iniciado pelo Ansible após upgrade"
+        reboot_timeout: 600
+
+    - name: Wait for server to come back
+      wait_for_connection:
+        timeout: 300
+
+    - name: Check if there are remaining upgradable packages
+      command: apt list --upgradable
+      register: remaining_updates
+      changed_when: false
+
+    - name: Show final status message
+      debug:
+        msg: >
+          Upgrade finalizado com sucesso!
+          {% if 'Listing...' in remaining_updates.stdout and remaining_updates.stdout_lines|length == 1 %}
+          Não há pacotes pendentes para atualização.
+          {% else %}
+          Ainda existem pacotes pendentes:
+          {{ remaining_updates.stdout }}
+          {% endif %}

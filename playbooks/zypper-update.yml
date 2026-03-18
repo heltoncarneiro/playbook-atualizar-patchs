@@ -1,0 +1,39 @@
+---
+- hosts: all
+  become: yes
+
+  tasks:
+
+    - name: Refresh zypper repositories
+      command: zypper refresh
+
+    - name: Update all packages (zypper update)
+      zypper:
+        name: '*'
+        state: latest
+      register: update_result
+
+    - name: Reboot server after update
+      reboot:
+        msg: "Reboot iniciado pelo Ansible após zypper update"
+        reboot_timeout: 600
+
+    - name: Wait for server to come back
+      wait_for_connection:
+        timeout: 300
+
+    - name: Check if there are remaining updates
+      command: zypper list-updates
+      register: remaining_updates
+      changed_when: false
+
+    - name: Show final status message
+      debug:
+        msg: >
+          Update finalizado com sucesso!
+          {% if remaining_updates.stdout_lines | length <= 4 %}
+          Não há pacotes pendentes para atualização.
+          {% else %}
+          Ainda existem pacotes pendentes:
+          {{ remaining_updates.stdout }}
+          {% endif %}
