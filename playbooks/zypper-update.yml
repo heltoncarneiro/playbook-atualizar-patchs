@@ -1,39 +1,46 @@
----
 - hosts: all
   become: yes
 
   tasks:
+    - name: 1. Atualizar cache do zypper
+      zypper:
+        name: '*'
+        update_cache: yes
 
-    - name: Refresh zypper repositories
-      command: zypper refresh
+    - name: 2. Verificar pacotes pendentes (Antes)
+      command: zypper list-updates
+      register: preview_updates
+      changed_when: false
+      failed_when: false
 
-    - name: Update all packages (zypper update)
+    - name: 3. Mostrar resumo do que será feito
+      debug:
+        msg: "Iniciando atualização de {{ preview_updates.stdout_lines | length | int - 4 if preview_updates.stdout_lines | length > 4 else 0 }} pacotes."
+
+    - name: 4. Aplicar atualizações
       zypper:
         name: '*'
         state: latest
       register: update_result
 
-    - name: Reboot server after update
+    - name: 5. Reiniciar servidor
       reboot:
-        msg: "Reboot iniciado pelo Ansible após zypper update"
+        msg: "Reboot mandatório pós-manutenção via Ansible"
         reboot_timeout: 600
 
-    - name: Wait for server to come back
-      wait_for_connection:
-        timeout: 300
-
-    - name: Check if there are remaining updates
+    - name: 6. Verificar status final após retorno
       command: zypper list-updates
-      register: remaining_updates
+      register: final_updates
       changed_when: false
 
-    - name: Show final status message
+    - name: 7. Exibir relatório de conclusão
+      vars:
+        total_restante: "{{ final_updates.stdout_lines | length | int - 4 if final_updates.stdout_lines | length > 4 else 0 }}"
       debug:
         msg: >
-          Update finalizado com sucesso!
-          {% if remaining_updates.stdout_lines | length <= 4 %}
-          Não há pacotes pendentes para atualização.
-          {% else %}
-          Ainda existem pacotes pendentes:
-          {{ remaining_updates.stdout }}
+          MANUTENÇÃO CONCLUÍDA:
+          - O servidor foi reiniciado conforme solicitado.
+          - Pacotes que ainda constam como pendentes: {{ total_restante }}
+          {% if total_restante | int > 0 %}
+          Nota: Alguns pacotes podem exigir intervenção manual ou troca de vendor.
           {% endif %}
