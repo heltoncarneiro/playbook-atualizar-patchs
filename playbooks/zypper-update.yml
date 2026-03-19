@@ -2,11 +2,11 @@
   become: yes
 
   tasks:
-    - name: 1. Atualizar repositórios (Refresh)
+    - name: 1. Atualizar repositórios
       command: zypper refresh
       changed_when: false
 
-    - name: 2. Verificar pacotes pendentes (Antes)
+    - name: 2. Verificar pacotes pendentes
       command: zypper list-updates
       register: preview_updates
       changed_when: false
@@ -22,7 +22,7 @@
         state: latest
       register: update_result
 
-    - name: 5. Reiniciar servidor (Sempre)
+    - name: 5. Reiniciar servidor
       reboot:
         msg: "Reboot mandatório pós-manutenção via Ansible"
         reboot_timeout: 600
