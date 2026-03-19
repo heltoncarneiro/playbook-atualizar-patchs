@@ -20,8 +20,6 @@
       zypper:
         name: '*'
         state: latest
-        dist_upgrade: yes  # Tenta resolver mudanças de arquitetura/dependências
-        extra_args: '--force-resolution' # Força o zypper a escolher uma solução automática para o conflito
       register: update_result
 
     - name: 5. Reiniciar servidor (Sempre)
