@@ -16,7 +16,7 @@
       debug:
         msg: "Iniciando atualização de {{ preview_updates.stdout_lines | length | int - 4 if preview_updates.stdout_lines | length > 4 else 0 }} pacotes."
 
-    - name: 4. Aplicar atualizações (com resolução de conflitos)
+    - name: 4. Aplicar atualizações
       zypper:
         name: '*'
         state: latest
