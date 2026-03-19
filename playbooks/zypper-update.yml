@@ -2,10 +2,9 @@
   become: yes
 
   tasks:
-    - name: 1. Atualizar cache do zypper
-      zypper:
-        name: '*'
-        update_cache: yes
+    - name: 1. Atualizar repositórios (Refresh)
+      command: zypper refresh
+      changed_when: false
 
     - name: 2. Verificar pacotes pendentes (Antes)
       command: zypper list-updates
@@ -17,18 +16,20 @@
       debug:
         msg: "Iniciando atualização de {{ preview_updates.stdout_lines | length | int - 4 if preview_updates.stdout_lines | length > 4 else 0 }} pacotes."
 
-    - name: 4. Aplicar atualizações
+    - name: 4. Aplicar atualizações (com resolução de conflitos)
       zypper:
         name: '*'
         state: latest
+        dist_upgrade: yes  # Tenta resolver mudanças de arquitetura/dependências
+        extra_args: '--force-resolution' # Força o zypper a escolher uma solução automática para o conflito
       register: update_result
 
-    - name: 5. Reiniciar servidor
+    - name: 5. Reiniciar servidor (Sempre)
       reboot:
         msg: "Reboot mandatório pós-manutenção via Ansible"
         reboot_timeout: 600
 
-    - name: 6. Verificar status final após retorno
+    - name: 6. Verificar status final
       command: zypper list-updates
       register: final_updates
       changed_when: false
@@ -39,8 +40,8 @@
       debug:
         msg: >
           MANUTENÇÃO CONCLUÍDA:
-          - O servidor foi reiniciado conforme solicitado.
-          - Pacotes que ainda constam como pendentes: {{ total_restante }}
+          - Reboot realizado com sucesso.
+          - Pacotes pendentes: {{ total_restante }}
           {% if total_restante | int > 0 %}
-          Nota: Alguns pacotes podem exigir intervenção manual ou troca de vendor.
+          Nota: O pacote 'aws-cli-cmd' ou outros podem ter sido pulados por falta de dependências no repositório.
           {% endif %}
