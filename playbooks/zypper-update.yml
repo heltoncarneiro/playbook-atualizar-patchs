@@ -3,17 +3,14 @@
 
   tasks:
     - name: 1. Atualizar repositórios (Cache)
-      zypper:
-        name: '*'
-        update_cache: yes
+      command: zypper refresh
 
     - name: 2. Aplicar atualizações
       zypper:
         name: '*'
         state: latest
-        extra_args: '--force-resolution' 
       register: update_result
-      
+
     - name: 3. Reiniciar servidor (Obrigatório)
       reboot:
         msg: "Reboot mandatório pós-manutenção"
