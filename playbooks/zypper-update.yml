@@ -3,43 +3,24 @@
 
   tasks:
     - name: 1. Atualizar repositórios
-      command: zypper refresh
-      changed_when: false
+      zypper:
+        name: '*'
+        update_cache: yes
 
-    - name: 2. Verificar pacotes pendentes
-      command: zypper list-updates
-      register: preview_updates
-      changed_when: false
-      failed_when: false
-
-    - name: 3. Mostrar resumo do que será feito
-      debug:
-        msg: "Iniciando atualização de {{ preview_updates.stdout_lines | length | int - 4 if preview_updates.stdout_lines | length > 4 else 0 }} pacotes."
-
-    - name: 4. Aplicar atualizações
+    - name: 2. Aplicar atualizações
       zypper:
         name: '*'
         state: latest
       register: update_result
 
-    - name: 5. Reiniciar servidor
+    - name: 3. Reiniciar servidor (Obrigatório)
       reboot:
-        msg: "Reboot mandatório pós-manutenção via Ansible"
+        msg: "Reboot mandatório pós-manutenção"
         reboot_timeout: 600
 
-    - name: 6. Verificar status final
-      command: zypper list-updates
-      register: final_updates
-      changed_when: false
-
-    - name: 7. Exibir relatório de conclusão
-      vars:
-        total_restante: "{{ final_updates.stdout_lines | length | int - 4 if final_updates.stdout_lines | length > 4 else 0 }}"
+    - name: 4. Exibir relatório final
       debug:
         msg: >
-          MANUTENÇÃO CONCLUÍDA:
-          - Reboot realizado com sucesso.
-          - Pacotes pendentes: {{ total_restante }}
-          {% if total_restante | int > 0 %}
-          Nota: O pacote 'aws-cli-cmd' ou outros podem ter sido pulados por falta de dependências no repositório.
-          {% endif %}
+          PROCESSO FINALIZADO:
+          - As atualizações foram enviadas ao SO.
+          - O servidor foi reiniciado.
