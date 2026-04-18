@@ -2,7 +2,7 @@
   become: yes
 
   tasks:
-    - name: 1. Atualizar repositórios
+    - name: 1. Atualizar repositórios (Cache)
       zypper:
         name: '*'
         update_cache: yes
@@ -11,8 +11,9 @@
       zypper:
         name: '*'
         state: latest
+        extra_args: '--force-resolution' 
       register: update_result
-
+      
     - name: 3. Reiniciar servidor (Obrigatório)
       reboot:
         msg: "Reboot mandatório pós-manutenção"
@@ -22,5 +23,5 @@
       debug:
         msg: >
           PROCESSO FINALIZADO:
-          - As atualizações foram enviadas ao SO.
-          - O servidor foi reiniciado.
+          - Status da atualização: {{ 'Sucesso/Alterado' if update_result.changed else 'Sem alterações' }}
+          - Reboot realizado.
