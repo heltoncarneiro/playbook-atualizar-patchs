@@ -6,7 +6,7 @@
       command: zypper refresh
 
     - name: 2. Aplicar atualizações
-      zypper:
+      community.general.zypper:
         name: '*'
         state: latest
       register: update_result
